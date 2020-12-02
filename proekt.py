@@ -1,0 +1,161 @@
+class LabirintTurtle:
+    def __init__(self):
+        self.map = []
+        self.map_valid = True
+        self.turtle_coord = [None, None]
+        self.maze_shape = [0, 0]
+        self.exit_coord = None
+        self.path_len = 0
+        self.way = [[-1, -1, -1]]
+        self.is_load = False
+        self.is_path = False
+        self.is_check = False
+
+    def load_map(self, file):
+        if file.endswith('.txt'):
+            self.is_load = True
+
+            fd = open(file, 'r')
+            lines = fd.readlines()
+            last = lines[-2:]
+            self.turtle_coord[0] = int(last[0])
+            self.turtle_coord[1] = int(last[1])
+            mz = lines[:-2]
+
+            for line in mz:
+                t = list(line[:-1])
+                self.map.append(t)
+            fd.close()
+
+            self.maze_shape[0] = len(self.map)
+            self.maze_shape[1] = len(self.map[0])
+
+            return 'Карта ' + str(self.maze_shape) + ' загружена.  Координаты черепахи ' + str(self.turtle_coord)
+        else:
+            return 'Неверный тип файла карты:' + ' ' + str(file.split('.')[1])
+
+    def show_map(self, turtle=False):
+        if self.is_load and self.map_valid or self.is_check:
+            tmp = self.map[:]
+            if turtle:
+                tmp[self.turtle_coord[1]][self.turtle_coord[0]] = 'A'
+            for i, line in enumerate(tmp):
+                print(*line)
+            self.map[self.turtle_coord[1]][self.turtle_coord[0]] = ' '
+            print('-' * 25)
+            return ''
+        elif self.is_load and not self.map_valid:
+            return 'Карта невалидная'
+        else:
+            return 'Карта не загружена'
+
+    def check_map(self):
+        if self.is_load and self.map_valid:
+            if self.map_valid:
+                for line in self.map:
+                    if '\t' in line:
+                        self.map_valid = False
+                        break
+
+            if self.map_valid:
+                f = False
+                up = self.map[0]
+                bottom = self.map[-1]
+                left = [i[0] for i in self.map]
+                right = [i[-1] for i in self.map]
+
+                for i in [up, bottom, left, right]:
+                    if ' ' in i:
+                        index_x = i.index(' ')
+                        if self.map[0][index_x] == ' ':  # вверх
+                            index_y = 0
+                        if self.map[-1][index_x] == ' ':  # вниз
+                            index_y = self.maze_shape[0] - 1
+                        if left[index_x] == ' ':  # влево
+                            index_y = left.index(' ')
+                        if right[index_x] == ' ':  # вправо
+                            index_y = right.index(' ')
+
+                        self.exit_coord = [index_x, index_y]
+                        f = True
+                        self.is_check = True
+                        break
+
+                self.map_valid = f
+            if self.map_valid:
+                for row in range(1, self.maze_shape[0] - 1):
+                    for col in range(1, self.maze_shape[1] - 1):
+                        cur = self.map[row][col]
+
+                        prev_x = self.map[row][col - 1]
+                        next_x = self.map[row][col + 1]
+                        prev_y = self.map[row - 1][col]
+                        next_y = self.map[row + 1][col]
+                        if cur != '*' and next_x == prev_x and next_x == '*' and next_y == prev_y and next_y == '*':
+                            self.map_valid = False
+                            break
+
+            if self.map_valid:
+                if self.turtle_coord[0] is not None:
+                    x = self.turtle_coord[0]
+                    y = self.turtle_coord[1]
+                    if self.map[x][y] == '*':
+                        self.map_valid = False
+
+            if self.map_valid:
+                if self.turtle_coord[0] is None:
+                    self.map_valid = False
+
+            if self.map_valid:
+                return 'Карта валидная'
+            else:
+                return 'Карта невалидная'
+        elif self.is_load and not self.map_valid:
+            return 'Карта невалидная'
+        else:
+            return 'Карта не загружена'
+
+    def exit_count_step(self):
+        if self.is_load and self.map_valid and self.is_path:
+            for line in self.map:
+                for c in line:
+                    if '.' in c:
+                        self.path_len += 1
+            if self.path_len == 0:
+                self.path_len = len(self.way[1:])
+
+            return 'Длина пути ' + str(self.path_len)
+        elif self.is_load and not self.map_valid:
+            return 'Карта невалидная'
+        elif self.is_load and self.map_valid and not self.is_path:
+            return 'Поиск пути еще не реализован'
+        else:
+            return 'Карта не загружена'
+
+    def exit_show_step(self):
+        if self.is_load and self.map_valid and self.is_check:
+            start = self.turtle_coord
+            self.solve(start[0], start[1])
+
+            for r, line in enumerate(self.map):
+                points = line[:]
+                for c, col in enumerate(points):
+                    if col == 'R' or col == 'L' or col == 'D' or col == 'U':
+                        points[c] = '.'
+                print(*points)
+
+            self.is_path = True
+            return ''
+        elif self.is_load and not self.is_check:
+            return 'Карта не проверена на валидность'
+        elif self.is_load and not self.map_valid :
+            return 'Карта невалидная'
+        else:
+            return 'Карта не загружена'
+
+
+maze = LabirintTurtle()
+print(maze.load_map('hard_test.txt'))
+print(maze.show_map(turtle=False))
+print(maze.show_map(turtle=True))
+print(maze.check_map())
