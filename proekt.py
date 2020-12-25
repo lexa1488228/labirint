@@ -67,13 +67,13 @@ class LabirintTurtle:
                 for i in [up, bottom, left, right]:
                     if ' ' in i:
                         index_x = i.index(' ')
-                        if self.map[0][index_x] == ' ':  # вверх
+                        if self.map[0][index_x] == ' ':
                             index_y = 0
-                        if self.map[-1][index_x] == ' ':  # вниз
+                        if self.map[-1][index_x] == ' ':
                             index_y = self.maze_shape[0] - 1
-                        if left[index_x] == ' ':  # влево
+                        if left[index_x] == ' ':
                             index_y = left.index(' ')
-                        if right[index_x] == ' ':  # вправо
+                        if right[index_x] == ' ':
                             index_y = right.index(' ')
 
                         self.exit_coord = [index_x, index_y]
@@ -154,8 +154,42 @@ class LabirintTurtle:
             return 'Карта не загружена'
 
 
+    def solve(self, x, y):
+        self.map[self.exit_coord[1]][self.exit_coord[0]] = ':'
+        if y > len(self.map) - 1 or x > len(self.map[y]) - 1:
+            return False
+
+        if self.map[y][x] == ":":
+            return True
+
+        if self.map[y][x] != " ":
+            return False
+
+        self.map[y][x] = "."
+
+        if self.solve(x + 1, y) == True:
+            self.way.append(['Right', x, y])
+            self.map[y][x] = 'R'
+            return True
+        if self.solve(x, y + 1) == True:
+            self.way.append(['Down', x, y])
+            self.map[y][x] = 'D'
+            return True
+        if self.solve(x - 1, y) == True:
+            self.way.append(['Left', x, y])
+            self.map[y][x] = 'L'
+            return True
+        if self.solve(x, y - 1) == True:
+            self.way.append(['Up', x, y])
+            self.map[y][x] = 'U'
+            return True
+        self.map[y][x] = " "
+        return False
+
 maze = LabirintTurtle()
 print(maze.load_map('hard_test.txt'))
 print(maze.show_map(turtle=False))
 print(maze.show_map(turtle=True))
 print(maze.check_map())
+print(maze.exit_show_step())
+print(maze.exit_count_step())
